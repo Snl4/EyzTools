@@ -31,12 +31,5 @@
       "icons/icon.ico"
     ]
   },
-  "plugins": {
-    "fs": {
-      "scope": {
-        "allow": ["$HOME/**", "$DESKTOP/**", "$DOCUMENT/**", "$DOWNLOAD/**"],
-        "deny": []
-      }
-    }
-  }
+  "plugins": {}
 }
