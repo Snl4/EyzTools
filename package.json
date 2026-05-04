@@ -2,16 +2,38 @@
   "name": "eyz-tools",
   "version": "1.0.0",
   "description": "Minecraft Resource Pack Generator",
+  "main": "main.js",
   "scripts": {
-    "dev": "tauri dev",
-    "build": "tauri build",
-    "tauri": "tauri"
+    "start": "electron .",
+    "dev": "electron .",
+    "build": "electron-builder --win"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.0.0"
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.0.0",
     "jszip": "^3.10.1"
+  },
+  "build": {
+    "appId": "com.eyztools.minecraft-pack-gen",
+    "productName": "EyzTools",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico"
+    }
   }
 }

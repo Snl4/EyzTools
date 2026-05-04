@@ -1,4 +1,4 @@
-/* ── Reset & base ─────────────────────────────────────────────── */
+/* ── Reset ───────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -11,7 +11,7 @@
   --text:      #e4e6ef;
   --muted:     #7c8299;
   --radius:    8px;
-  --font:      'Segoe UI', system-ui, sans-serif;
+  --font: 'Segoe UI', system-ui, sans-serif;
 }
 
 html, body {
@@ -21,16 +21,18 @@ html, body {
   font-family: var(--font);
   font-size: 14px;
   line-height: 1.5;
+  /* Electron: prevent text selection on UI elements */
+  user-select: none;
 }
 
-/* ── App shell ───────────────────────────────────────────────── */
+/* ── Layout ──────────────────────────────────────────────────────────────── */
 #app {
   max-width: 640px;
   margin: 0 auto;
-  padding: 24px 20px 40px;
+  padding: 24px 20px 48px;
 }
 
-/* ── Header ──────────────────────────────────────────────────── */
+/* ── Header ──────────────────────────────────────────────────────────────── */
 header {
   text-align: center;
   padding-bottom: 24px;
@@ -51,7 +53,7 @@ header {
   font-size: 13px;
 }
 
-/* ── Form fields ─────────────────────────────────────────────── */
+/* ── Form fields ─────────────────────────────────────────────────────────── */
 .field {
   display: flex;
   flex-direction: column;
@@ -78,6 +80,8 @@ select {
   outline: none;
   transition: border-color 0.15s;
   width: 100%;
+  /* allow selecting text in inputs */
+  user-select: text;
 }
 
 input[type="text"]:focus,
@@ -89,6 +93,7 @@ select:focus {
 input[readonly] {
   color: var(--muted);
   cursor: default;
+  user-select: none;
 }
 
 .hint {
@@ -96,7 +101,7 @@ input[readonly] {
   color: var(--muted);
 }
 
-/* ── Drag & drop zone ────────────────────────────────────────── */
+/* ── Drag & drop zone ────────────────────────────────────────────────────── */
 .drop-zone {
   background: var(--surface);
   border: 2px dashed var(--border);
@@ -107,7 +112,6 @@ input[readonly] {
   transition: border-color 0.15s, background 0.15s;
   color: var(--muted);
   font-size: 13px;
-  user-select: none;
 }
 
 .drop-zone:hover,
@@ -129,17 +133,15 @@ input[readonly] {
   color: var(--accent);
 }
 
-/* ── Folder row ──────────────────────────────────────────────── */
+/* ── Folder row ──────────────────────────────────────────────────────────── */
 .folder-row {
   display: flex;
   gap: 8px;
 }
 
-.folder-row input {
-  flex: 1;
-}
+.folder-row input { flex: 1; }
 
-/* ── Buttons ─────────────────────────────────────────────────── */
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -169,7 +171,7 @@ input[readonly] {
 .btn-primary:hover:not(:disabled) { background: #6bd484; }
 
 .btn-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -181,12 +183,10 @@ input[readonly] {
 
 .btn-secondary:hover { background: #3a3f52; }
 
-/* ── Actions ─────────────────────────────────────────────────── */
-.actions {
-  margin-top: 28px;
-}
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+.actions { margin-top: 28px; }
 
-/* ── Status banner ───────────────────────────────────────────── */
+/* ── Status banner ───────────────────────────────────────────────────────── */
 .banner {
   margin-top: 20px;
   padding: 14px 16px;
@@ -195,6 +195,7 @@ input[readonly] {
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
+  user-select: text;
 }
 
 .banner.success {
@@ -211,16 +212,14 @@ input[readonly] {
 
 .hidden { display: none !important; }
 
-/* ── Spinner (inside generate button while working) ──────────── */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+/* ── Loading spinner ─────────────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .spinner {
   display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(0,0,0,0.3);
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(0,0,0,0.25);
   border-top-color: #0e1a12;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;

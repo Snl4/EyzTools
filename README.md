@@ -1,79 +1,64 @@
 # EyzTools – Minecraft Resource Pack Generator
 
-A lightweight Tauri desktop app that generates a valid Minecraft Java Edition resource pack with **CustomModelData** support.
+Electron desktop app for generating Minecraft Java Edition resource packs with **CustomModelData** support. No Rust required — just Node.js.
 
-## Features
-
-- Set a Custom Model Data value and model name
-- Choose any Minecraft item from the dropdown
-- Upload your Blockbench-exported `.json` model (drag & drop supported)
-- Pick an output folder
-- One-click generation of the complete resource pack folder structure
-
-## Generated Structure
+## Generated pack structure
 
 ```
 <output>/
 ├── pack.mcmeta
-└── assets/
-    └── minecraft/
-        ├── models/
-        │   └── item/
-        │       ├── {model_name}.json       ← your uploaded model
-        │       └── {selected_item}.json    ← override with predicate
-        └── textures/
-            └── item/                       ← drop your textures here
+└── assets/minecraft/
+    ├── models/item/
+    │   ├── {model_name}.json       ← your Blockbench model
+    │   └── {selected_item}.json    ← override with predicate
+    └── textures/item/              ← drop your textures here manually
 ```
 
-## Prerequisites
+## Requirements
 
 | Tool | Version |
 |------|---------|
-| Rust | 1.80+ |
-| Node.js | 18+ |
+| Node.js | 18 LTS+ |
 | npm | 9+ |
-| Tauri CLI | 2.x |
 
-### Windows extra requirements
-
-- [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (MSVC toolchain)
-- WebView2 (included in Windows 10/11, or install the Evergreen Bootstrapper)
-
-## Setup & Run
+## Run in development
 
 ```bash
-# 1. Install JS dependencies
 npm install
+npm run dev        # or: npm start
+```
 
-# 2. Run in development mode (hot-reload)
-npm run dev
+## Build Windows installer (.exe)
 
-# 3. Build production .exe
+```bash
+npm install
 npm run build
 ```
 
-The installer and `.exe` will be in `src-tauri/target/release/bundle/`.
+Output: `dist/EyzTools Setup 1.0.0.exe`
 
-## Tauri Architecture
+## Project structure
 
 ```
-src/           ← Frontend (Vanilla JS + CSS)
-src-tauri/
-  src/
-    main.rs    ← Entry point
-    lib.rs     ← Tauri commands (Rust filesystem logic)
-  tauri.conf.json
-  Cargo.toml
+├── main.js          ← Electron main process (IPC handlers, fs logic)
+├── preload.js       ← Context bridge — exposes safe API to renderer
+├── renderer/
+│   ├── index.html   ← UI
+│   ├── renderer.js  ← Frontend logic & validation
+│   └── styles.css   ← Dark theme
+├── assets/
+│   └── icon.ico     ← App icon
+└── package.json     ← electron-builder config
 ```
 
-## Pack Format
+## pack_format reference
 
-`pack_format: 15` targets **Minecraft 1.20 – 1.20.1**. Adjust in `lib.rs → write_pack()` for other versions:
-
-| pack_format | MC Version |
-|-------------|-----------|
+| pack_format | Minecraft version |
+|-------------|-------------------|
 | 13 | 1.19.4 |
 | 15 | 1.20 – 1.20.1 |
 | 18 | 1.20.2 |
 | 22 | 1.20.3 – 1.20.4 |
 | 34 | 1.21 |
+
+Edit `pack_format` in `main.js → ipcMain.handle('generate-pack', ...)`.
