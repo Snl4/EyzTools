@@ -72,11 +72,11 @@
           <!-- Blockbench model file -->
           <div class="field">
             <label>Blockbench Model (.json)</label>
-            <div id="modelDropZone" class="drop-zone" role="button" tabindex="0"
-                 aria-label="Drop or click to upload Blockbench model JSON">
+            <!-- Using <label for=...> so clicking opens native file dialog without JS .click() -->
+            <label id="modelDropZone" for="modelFile" class="drop-zone" tabindex="0">
               <span id="modelDropLabel">Drag &amp; drop .json here, or click to browse</span>
-              <input type="file" id="modelFile" accept=".json" hidden />
-            </div>
+            </label>
+            <input type="file" id="modelFile" accept=".json" style="display:none" />
             <span class="hint" id="modelFileHint"></span>
           </div>
 
@@ -84,11 +84,11 @@
           <div class="field">
             <label>Texture (.png) <span class="optional">optional</span></label>
             <div class="texture-row">
-              <div id="textureDropZone" class="drop-zone texture-drop" role="button" tabindex="0"
-                   aria-label="Drop or click to upload texture PNG">
+              <label id="textureDropZone" for="textureFile" class="drop-zone texture-drop" tabindex="0">
                 <span id="textureDropLabel">Drop .png or click</span>
-                <input type="file" id="textureFile" accept=".png,.jpg,.jpeg" hidden />
-              </div>
+              </label>
+              <input type="file" id="textureFile" accept=".png,.jpg,.jpeg" style="display:none" />
+
               <div id="textureThumb" class="texture-thumb hidden">
                 <img id="textureImg" alt="texture preview" />
                 <button type="button" id="textureClear" class="thumb-clear" title="Remove texture">✕</button>
