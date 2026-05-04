@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self' data: blob:; script-src 'self'; style-src 'self'" />
+        content="default-src 'self' data: blob:; script-src 'self' 'unsafe-eval'; style-src 'self'" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EyzTools</title>
   <link rel="stylesheet" href="styles.css" />
@@ -132,7 +132,6 @@
     </div><!-- /.layout -->
   </div><!-- /#app -->
 
-  <!-- ES module entry point -->
-  <script type="module" src="renderer.js"></script>
+  <script src="renderer.js"></script>
 </body>
 </html>

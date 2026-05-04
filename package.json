@@ -4,7 +4,6 @@
   "description": "Minecraft Resource Pack Generator",
   "main": "main.js",
   "scripts": {
-    "postinstall": "node scripts/setup.js",
     "start": "electron .",
     "dev": "electron .",
     "build": "electron-builder --win"

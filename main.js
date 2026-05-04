@@ -12,8 +12,8 @@ function createWindow() {
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,   // security: renderer can't access Node directly
-      nodeIntegration: false,
+      contextIsolation: false,  // allows renderer to use require() for Three.js
+      nodeIntegration: true,
     },
   });
 
