@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EyzTools – Minecraft Pack Generator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="logo">⛏ EyzTools</div>
+      <p class="subtitle">Minecraft Resource Pack Generator</p>
+    </header>
+
+    <main>
+      <form id="packForm" novalidate>
+
+        <!-- ── Model Name ─────────────────────────────────── -->
+        <div class="field">
+          <label for="modelName">Model Name</label>
+          <input
+            type="text"
+            id="modelName"
+            placeholder="e.g. my_cool_sword"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <span class="hint">Used as the filename for your model JSON.</span>
+        </div>
+
+        <!-- ── Custom Model Data ──────────────────────────── -->
+        <div class="field">
+          <label for="customModelData">Custom Model Data</label>
+          <input
+            type="number"
+            id="customModelData"
+            placeholder="e.g. 1001"
+            min="1"
+          />
+          <span class="hint">Numeric predicate value used in the override.</span>
+        </div>
+
+        <!-- ── Item selector ──────────────────────────────── -->
+        <div class="field">
+          <label for="selectedItem">Minecraft Item</label>
+          <select id="selectedItem">
+            <option value="diamond_sword">Diamond Sword</option>
+            <option value="stick">Stick</option>
+            <option value="wooden_sword">Wooden Sword</option>
+            <option value="stone_sword">Stone Sword</option>
+            <option value="iron_sword">Iron Sword</option>
+            <option value="golden_sword">Golden Sword</option>
+            <option value="netherite_sword">Netherite Sword</option>
+            <option value="bow">Bow</option>
+            <option value="crossbow">Crossbow</option>
+            <option value="trident">Trident</option>
+            <option value="shield">Shield</option>
+            <option value="carrot_on_a_stick">Carrot on a Stick</option>
+            <option value="fishing_rod">Fishing Rod</option>
+            <option value="blaze_rod">Blaze Rod</option>
+            <option value="bone">Bone</option>
+            <option value="book">Book</option>
+            <option value="clock">Clock</option>
+            <option value="compass">Compass</option>
+            <option value="diamond">Diamond</option>
+            <option value="emerald">Emerald</option>
+            <option value="feather">Feather</option>
+            <option value="flint">Flint</option>
+            <option value="gold_ingot">Gold Ingot</option>
+            <option value="iron_ingot">Iron Ingot</option>
+            <option value="paper">Paper</option>
+            <option value="string">String</option>
+          </select>
+        </div>
+
+        <!-- ── Model file upload (+ drag & drop) ─────────── -->
+        <div class="field">
+          <label>Blockbench Model File (.json)</label>
+          <div
+            id="dropZone"
+            class="drop-zone"
+            role="button"
+            tabindex="0"
+            aria-label="Drop or click to upload model JSON"
+          >
+            <span id="dropLabel">Drag & drop your .json here, or click to browse</span>
+            <input type="file" id="modelFile" accept=".json" hidden />
+          </div>
+          <span class="hint" id="fileHint"></span>
+        </div>
+
+        <!-- ── Output folder ──────────────────────────────── -->
+        <div class="field">
+          <label>Output Folder</label>
+          <div class="folder-row">
+            <input
+              type="text"
+              id="outputPath"
+              placeholder="No folder selected"
+              readonly
+            />
+            <button type="button" id="folderBtn" class="btn btn-secondary">Browse…</button>
+          </div>
+        </div>
+
+        <!-- ── Actions ────────────────────────────────────── -->
+        <div class="actions">
+          <button type="submit" id="generateBtn" class="btn btn-primary">
+            Generate Resource Pack
+          </button>
+        </div>
+
+      </form>
+
+      <!-- ── Status banner ──────────────────────────────────── -->
+      <div id="statusBanner" class="banner hidden" role="alert" aria-live="polite"></div>
+
+    </main>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

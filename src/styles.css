@@ -1,0 +1,227 @@
+/* ── Reset & base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #1a1c23;
+  --surface:   #22252f;
+  --border:    #2e3240;
+  --accent:    #56c172;
+  --accent-dk: #3fa358;
+  --danger:    #e05252;
+  --text:      #e4e6ef;
+  --muted:     #7c8299;
+  --radius:    8px;
+  --font:      'Segoe UI', system-ui, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── App shell ───────────────────────────────────────────────── */
+#app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
+header {
+  text-align: center;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+
+.logo {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+/* ── Form fields ─────────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+label {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: var(--font);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+  border-color: var(--accent);
+}
+
+input[readonly] {
+  color: var(--muted);
+  cursor: default;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Drag & drop zone ────────────────────────────────────────── */
+.drop-zone {
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  color: var(--muted);
+  font-size: 13px;
+  user-select: none;
+}
+
+.drop-zone:hover,
+.drop-zone:focus {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.drop-zone.drag-over {
+  border-color: var(--accent);
+  background: rgba(86, 193, 114, 0.07);
+  color: var(--accent);
+}
+
+.drop-zone.has-file {
+  border-color: var(--accent);
+  border-style: solid;
+  color: var(--accent);
+}
+
+/* ── Folder row ──────────────────────────────────────────────── */
+.folder-row {
+  display: flex;
+  gap: 8px;
+}
+
+.folder-row input {
+  flex: 1;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: var(--font);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.btn:active { transform: scale(0.98); }
+
+.btn-primary {
+  background: var(--accent);
+  color: #0e1a12;
+  width: 100%;
+  padding: 13px;
+  font-size: 15px;
+}
+
+.btn-primary:hover:not(:disabled) { background: #6bd484; }
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: var(--border);
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.btn-secondary:hover { background: #3a3f52; }
+
+/* ── Actions ─────────────────────────────────────────────────── */
+.actions {
+  margin-top: 28px;
+}
+
+/* ── Status banner ───────────────────────────────────────────── */
+.banner {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.banner.success {
+  background: rgba(86, 193, 114, 0.12);
+  border: 1px solid var(--accent);
+  color: #7fe898;
+}
+
+.banner.error {
+  background: rgba(224, 82, 82, 0.12);
+  border: 1px solid var(--danger);
+  color: #f08080;
+}
+
+.hidden { display: none !important; }
+
+/* ── Spinner (inside generate button while working) ──────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,0.3);
+  border-top-color: #0e1a12;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
