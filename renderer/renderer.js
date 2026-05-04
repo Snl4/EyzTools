@@ -1,92 +1,382 @@
-// renderer.js – runs in the Electron renderer process.
-// Communicates with the main process exclusively via window.electronAPI (preload bridge).
+import * as THREE from './three.module.min.js';
 
-'use strict';
+// ══════════════════════════════════════════════════════════════════════════════
+// 3D Preview — renders a Blockbench/Minecraft model using Three.js
+// ══════════════════════════════════════════════════════════════════════════════
 
-// ── DOM refs ──────────────────────────────────────────────────────────────────
-const form         = document.getElementById('packForm');
-const modelNameEl  = document.getElementById('modelName');
-const cmdEl        = document.getElementById('customModelData');
-const itemEl       = document.getElementById('selectedItem');
-const dropZone     = document.getElementById('dropZone');
-const dropLabel    = document.getElementById('dropLabel');
-const fileInput    = document.getElementById('modelFile');
-const fileHint     = document.getElementById('fileHint');
-const outputPathEl = document.getElementById('outputPath');
-const folderBtn    = document.getElementById('folderBtn');
-const generateBtn  = document.getElementById('generateBtn');
-const statusBanner = document.getElementById('statusBanner');
+class ModelPreview {
+  constructor(containerId) {
+    this.container   = document.getElementById(containerId);
+    this.modelGroup  = new THREE.Group();
+    this.isDragging  = false;
+    this.autoRotate  = true;
+    this.lastMouse   = { x: 0, y: 0 };
+    this.loadedTex   = null;
 
-// ── State ─────────────────────────────────────────────────────────────────────
-let modelJsonContent = null; // raw string from uploaded .json
+    this._initRenderer();
+    this._initLights();
+    this._initControls();
+    this._showPlaceholder();
+    this._animate();
 
-// ── Drag & drop / file upload ─────────────────────────────────────────────────
-dropZone.addEventListener('click', () => fileInput.click());
-
-dropZone.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
-});
-
-dropZone.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  dropZone.classList.add('drag-over');
-});
-
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-
-dropZone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
-  const file = e.dataTransfer?.files?.[0];
-  if (file) handleFile(file);
-});
-
-fileInput.addEventListener('change', () => {
-  if (fileInput.files[0]) handleFile(fileInput.files[0]);
-});
-
-function handleFile(file) {
-  if (!file.name.toLowerCase().endsWith('.json')) {
-    return showStatus('Only .json files are accepted.', false);
+    // Keep canvas size in sync with the panel
+    new ResizeObserver(() => this._resize()).observe(this.container);
   }
 
+  _initRenderer() {
+    const { clientWidth: w, clientHeight: h } = this.container;
+
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setSize(w || 400, h || 400);
+    this.renderer.setClearColor(0x22252f);
+    this.container.appendChild(this.renderer.domElement);
+
+    this.scene  = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(45, (w || 400) / (h || 400), 0.1, 2000);
+    this.camera.position.set(36, 28, 36);
+    this.camera.lookAt(0, 0, 0);
+
+    // Floor grid
+    const grid = new THREE.GridHelper(32, 8, 0x2e3240, 0x22252f);
+    grid.position.y = -8.5;
+    this.scene.add(grid);
+
+    this.scene.add(this.modelGroup);
+  }
+
+  _initLights() {
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+
+    const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+    sun.position.set(1, 2, 1.5);
+    this.scene.add(sun);
+
+    const fill = new THREE.DirectionalLight(0x8899ff, 0.3);
+    fill.position.set(-1, -0.5, -1);
+    this.scene.add(fill);
+  }
+
+  _initControls() {
+    const el = this.renderer.domElement;
+
+    el.addEventListener('mousedown', (e) => {
+      this.isDragging = true;
+      this.autoRotate = false;
+      this.lastMouse  = { x: e.clientX, y: e.clientY };
+    });
+
+    // Listen on window so drag doesn't break when cursor leaves canvas
+    window.addEventListener('mouseup', () => { this.isDragging = false; });
+
+    el.addEventListener('mousemove', (e) => {
+      if (!this.isDragging) return;
+      const dx = e.clientX - this.lastMouse.x;
+      const dy = e.clientY - this.lastMouse.y;
+      this.modelGroup.rotation.y += dx * 0.008;
+      this.modelGroup.rotation.x = Math.max(
+        -Math.PI / 2,
+        Math.min(Math.PI / 2, this.modelGroup.rotation.x + dy * 0.008),
+      );
+      this.lastMouse = { x: e.clientX, y: e.clientY };
+    });
+
+    el.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const s = 1 + e.deltaY * 0.001;
+      this.camera.position.multiplyScalar(Math.max(0.3, Math.min(3, s)));
+    }, { passive: false });
+
+    // Double-click → resume auto-rotate and reset tilt
+    el.addEventListener('dblclick', () => {
+      this.modelGroup.rotation.x = 0;
+      this.autoRotate = true;
+    });
+  }
+
+  // ── Public API ──────────────────────────────────────────────────────────────
+
+  /** Load and display a Minecraft/Blockbench model JSON string. */
+  loadModel(jsonString) {
+    let model;
+    try { model = JSON.parse(jsonString); } catch { return; }
+
+    this._clearModel();
+
+    const elements = model.elements ?? [];
+    if (elements.length === 0) {
+      // Model has no geometry (pure override / parent model) — show placeholder
+      this._showPlaceholder();
+      setPreviewStatus('No geometry in model — showing placeholder');
+      return;
+    }
+
+    for (const el of elements) {
+      this._addElement(el);
+    }
+
+    setPreviewStatus(`${elements.length} element${elements.length !== 1 ? 's' : ''} loaded`);
+  }
+
+  /** Apply a texture (data URL) to every mesh already in the scene. */
+  applyTexture(dataUrl) {
+    const loader = new THREE.TextureLoader();
+    this.loadedTex = loader.load(dataUrl, (tex) => {
+      tex.magFilter = THREE.NearestFilter;
+      tex.minFilter = THREE.NearestFilter;
+      this._applyTexToAll(tex);
+    });
+  }
+
+  /** Remove texture — revert to solid green material. */
+  clearTexture() {
+    this.loadedTex = null;
+    this.modelGroup.traverse((obj) => {
+      if (!obj.isMesh) return;
+      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+      mats.forEach((m) => {
+        m.map       = null;
+        m.color.set(0x56c172);
+        m.wireframe = false;
+        m.transparent = false;
+        m.opacity   = 1;
+        m.needsUpdate = true;
+      });
+    });
+  }
+
+  // ── Private helpers ─────────────────────────────────────────────────────────
+
+  _showPlaceholder() {
+    this._clearModel();
+    const geo = new THREE.BoxGeometry(16, 16, 16);
+    const mat = new THREE.MeshPhongMaterial({
+      color: 0x56c172, wireframe: true, transparent: true, opacity: 0.45,
+    });
+    this.modelGroup.add(new THREE.Mesh(geo, mat));
+    setPreviewStatus('No model loaded');
+  }
+
+  _clearModel() {
+    while (this.modelGroup.children.length) {
+      const child = this.modelGroup.children[0];
+      child.traverse((obj) => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          (Array.isArray(obj.material) ? obj.material : [obj.material])
+            .forEach((m) => m.dispose());
+        }
+      });
+      this.modelGroup.remove(child);
+    }
+  }
+
+  _addElement(el) {
+    const [x1, y1, z1] = el.from;
+    const [x2, y2, z2] = el.to;
+    const w = x2 - x1, h = y2 - y1, d = z2 - z1;
+    if (w <= 0 || h <= 0 || d <= 0) return;
+
+    const geo = new THREE.BoxGeometry(w, h, d);
+    const mat = this.loadedTex
+      ? new THREE.MeshLambertMaterial({ map: this.loadedTex })
+      : new THREE.MeshLambertMaterial({ color: 0x56c172, transparent: true, opacity: 0.85 });
+
+    const mesh = new THREE.Mesh(geo, mat);
+
+    // Center of box, offset so model origin is at Three.js origin
+    const cx = x1 + w / 2 - 8;
+    const cy = y1 + h / 2 - 8;
+    const cz = z1 + d / 2 - 8;
+
+    if (el.rotation) {
+      // Pivot rotation: translate to pivot origin, rotate, translate back
+      const { angle, axis, origin: o } = el.rotation;
+      const rad  = (angle * Math.PI) / 180;
+      const pivot = new THREE.Object3D();
+      pivot.position.set(o[0] - 8, o[1] - 8, o[2] - 8);
+      pivot.rotation[axis] = rad;
+      mesh.position.set(cx - (o[0] - 8), cy - (o[1] - 8), cz - (o[2] - 8));
+      pivot.add(mesh);
+      this.modelGroup.add(pivot);
+    } else {
+      mesh.position.set(cx, cy, cz);
+      this.modelGroup.add(mesh);
+    }
+  }
+
+  _applyTexToAll(tex) {
+    this.modelGroup.traverse((obj) => {
+      if (!obj.isMesh) return;
+      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+      mats.forEach((m) => {
+        m.map         = tex;
+        m.color.set(0xffffff);
+        m.wireframe   = false;
+        m.transparent = false;
+        m.opacity     = 1;
+        m.needsUpdate = true;
+      });
+    });
+  }
+
+  _animate() {
+    requestAnimationFrame(() => this._animate());
+    if (this.autoRotate) this.modelGroup.rotation.y += 0.004;
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  _resize() {
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+    if (!w || !h) return;
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// UI logic
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const form            = document.getElementById('packForm');
+const modelNameEl     = document.getElementById('modelName');
+const cmdEl           = document.getElementById('customModelData');
+const itemEl          = document.getElementById('selectedItem');
+const modelDropZone   = document.getElementById('modelDropZone');
+const modelDropLabel  = document.getElementById('modelDropLabel');
+const modelFileInput  = document.getElementById('modelFile');
+const modelFileHint   = document.getElementById('modelFileHint');
+const textureDropZone = document.getElementById('textureDropZone');
+const textureDropLbl  = document.getElementById('textureDropLabel');
+const textureFileInput= document.getElementById('textureFile');
+const textureThumb    = document.getElementById('textureThumb');
+const textureImg      = document.getElementById('textureImg');
+const textureClearBtn = document.getElementById('textureClear');
+const outputPathEl    = document.getElementById('outputPath');
+const folderBtn       = document.getElementById('folderBtn');
+const generateBtn     = document.getElementById('generateBtn');
+const statusBanner    = document.getElementById('statusBanner');
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let modelJsonContent = null;
+let textureBase64    = null;
+let textureName      = null;
+
+// ── Init 3D preview ───────────────────────────────────────────────────────────
+const preview = new ModelPreview('previewCanvas');
+
+// ── Model file (drag & drop + click) ─────────────────────────────────────────
+modelDropZone.addEventListener('click', () => modelFileInput.click());
+modelDropZone.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); modelFileInput.click(); }
+});
+modelDropZone.addEventListener('dragover', (e) => {
+  e.preventDefault(); modelDropZone.classList.add('drag-over');
+});
+modelDropZone.addEventListener('dragleave', () => modelDropZone.classList.remove('drag-over'));
+modelDropZone.addEventListener('drop', (e) => {
+  e.preventDefault(); modelDropZone.classList.remove('drag-over');
+  const f = e.dataTransfer?.files?.[0];
+  if (f) handleModelFile(f);
+});
+modelFileInput.addEventListener('change', () => {
+  if (modelFileInput.files[0]) handleModelFile(modelFileInput.files[0]);
+});
+
+function handleModelFile(file) {
+  if (!file.name.toLowerCase().endsWith('.json')) {
+    return showStatus('Only .json model files are accepted.', false);
+  }
   const reader = new FileReader();
   reader.onload = (e) => {
     const text = e.target.result;
-    try {
-      JSON.parse(text); // quick validation
-    } catch {
-      showStatus('The selected file is not valid JSON.', false);
-      clearFile();
+    try { JSON.parse(text); } catch {
+      showStatus('The model file is not valid JSON.', false);
+      clearModelFile();
       return;
     }
     modelJsonContent = text;
-    dropLabel.textContent = `✔  ${file.name}`;
-    dropZone.classList.add('has-file');
-    fileHint.textContent = `${(file.size / 1024).toFixed(1)} KB loaded`;
+    modelDropLabel.textContent = `✔  ${file.name}`;
+    modelDropZone.classList.add('has-file');
+    modelFileHint.textContent = `${(file.size / 1024).toFixed(1)} KB loaded`;
     clearStatus();
+    preview.loadModel(text);
   };
   reader.readAsText(file);
 }
 
-function clearFile() {
-  modelJsonContent = null;
-  dropLabel.textContent = 'Drag & drop .json here, or click to browse';
-  dropZone.classList.remove('has-file');
-  fileHint.textContent = '';
-  fileInput.value = '';
+function clearModelFile() {
+  modelJsonContent  = null;
+  modelDropLabel.textContent = 'Drag & drop .json here, or click to browse';
+  modelDropZone.classList.remove('has-file');
+  modelFileHint.textContent = '';
+  modelFileInput.value = '';
+}
+
+// ── Texture file (drag & drop + click) ───────────────────────────────────────
+textureDropZone.addEventListener('click', () => textureFileInput.click());
+textureDropZone.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); textureFileInput.click(); }
+});
+textureDropZone.addEventListener('dragover', (e) => {
+  e.preventDefault(); textureDropZone.classList.add('drag-over');
+});
+textureDropZone.addEventListener('dragleave', () => textureDropZone.classList.remove('drag-over'));
+textureDropZone.addEventListener('drop', (e) => {
+  e.preventDefault(); textureDropZone.classList.remove('drag-over');
+  const f = e.dataTransfer?.files?.[0];
+  if (f) handleTextureFile(f);
+});
+textureFileInput.addEventListener('change', () => {
+  if (textureFileInput.files[0]) handleTextureFile(textureFileInput.files[0]);
+});
+
+textureClearBtn.addEventListener('click', () => clearTextureFile());
+
+function handleTextureFile(file) {
+  const ok = /\.(png|jpe?g)$/i.test(file.name);
+  if (!ok) return showStatus('Only .png / .jpg texture files are accepted.', false);
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;          // "data:image/png;base64,..."
+    textureBase64 = dataUrl.split(',')[1];    // raw base64 for IPC
+    textureName   = file.name;
+
+    // Show thumbnail
+    textureImg.src = dataUrl;
+    textureThumb.classList.remove('hidden');
+    textureDropLbl.textContent = `✔  ${file.name}`;
+    textureDropZone.classList.add('has-file');
+    clearStatus();
+
+    // Push to 3D preview
+    preview.applyTexture(dataUrl);
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearTextureFile() {
+  textureBase64 = null;
+  textureName   = null;
+  textureImg.src = '';
+  textureThumb.classList.add('hidden');
+  textureDropLbl.textContent = 'Drop .png or click';
+  textureDropZone.classList.remove('has-file');
+  textureFileInput.value = '';
+  preview.clearTexture();
 }
 
 // ── Output folder picker ──────────────────────────────────────────────────────
 folderBtn.addEventListener('click', async () => {
   const selected = await window.electronAPI.chooseOutputFolder();
-  if (selected) {
-    outputPathEl.value = selected;
-    clearStatus();
-  }
+  if (selected) { outputPathEl.value = selected; clearStatus(); }
 });
 
-// ── Form submission ────────────────────────────────────────────────────────────
+// ── Form submit ───────────────────────────────────────────────────────────────
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -95,24 +385,17 @@ form.addEventListener('submit', async (e) => {
   const selectedItem    = itemEl.value;
   const outputPath      = outputPathEl.value.trim();
 
-  // ── Validation ──────────────────────────────────────────────────────────
-  if (!modelName) {
+  if (!modelName)
     return showStatus('Model name cannot be empty.', false);
-  }
-  if (!/^[a-z0-9_]+$/.test(modelName)) {
-    return showStatus('Model name may only contain lowercase letters, digits and underscores.', false);
-  }
-  if (!cmdEl.value || isNaN(customModelData) || customModelData < 1) {
+  if (!/^[a-z0-9_]+$/.test(modelName))
+    return showStatus('Model name: lowercase letters, digits and underscores only.', false);
+  if (!cmdEl.value || isNaN(customModelData) || customModelData < 1)
     return showStatus('Custom Model Data must be a positive integer.', false);
-  }
-  if (!modelJsonContent) {
-    return showStatus('Please upload a Blockbench model .json file.', false);
-  }
-  if (!outputPath) {
+  if (!modelJsonContent)
+    return showStatus('Please upload a Blockbench .json model file.', false);
+  if (!outputPath)
     return showStatus('Please choose an output folder.', false);
-  }
 
-  // ── Generate ─────────────────────────────────────────────────────────────
   setLoading(true);
 
   const result = await window.electronAPI.generatePack({
@@ -121,6 +404,8 @@ form.addEventListener('submit', async (e) => {
     selectedItem,
     modelJson: modelJsonContent,
     outputPath,
+    textureBase64,
+    textureName,
   });
 
   showStatus(result.message, result.success);
@@ -137,10 +422,15 @@ function setLoading(on) {
 
 function showStatus(msg, success) {
   statusBanner.textContent = msg;
-  statusBanner.className = `banner ${success ? 'success' : 'error'}`;
+  statusBanner.className   = `banner ${success ? 'success' : 'error'}`;
 }
 
 function clearStatus() {
   statusBanner.textContent = '';
-  statusBanner.className = 'banner hidden';
+  statusBanner.className   = 'banner hidden';
+}
+
+function setPreviewStatus(msg) {
+  const el = document.getElementById('previewStatus');
+  if (el) el.textContent = msg;
 }

@@ -4,6 +4,7 @@
   "description": "Minecraft Resource Pack Generator",
   "main": "main.js",
   "scripts": {
+    "postinstall": "node scripts/setup.js",
     "start": "electron .",
     "dev": "electron .",
     "build": "electron-builder --win"
@@ -13,7 +14,8 @@
     "electron-builder": "^25.0.0"
   },
   "dependencies": {
-    "jszip": "^3.10.1"
+    "jszip": "^3.10.1",
+    "three": "^0.184.0"
   },
   "build": {
     "appId": "com.eyztools.minecraft-pack-gen",
@@ -23,10 +25,18 @@
       "preload.js",
       "renderer/**/*",
       "assets/**/*",
+      "scripts/**/*",
       "node_modules/**/*"
     ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "assets/icon.ico"
     },
     "nsis": {

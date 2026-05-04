@@ -5,9 +5,9 @@ const fs   = require('fs');
 // ── Window ───────────────────────────────────────────────────────────────────
 function createWindow() {
   const win = new BrowserWindow({
-    width: 720,
+    width: 1060,
     height: 720,
-    minWidth: 560,
+    minWidth: 760,
     title: 'EyzTools – Minecraft Pack Generator',
     autoHideMenuBar: true,
     webPreferences: {
@@ -31,7 +31,8 @@ ipcMain.handle('choose-output-folder', async () => {
 
 // ── IPC: generate resource pack ───────────────────────────────────────────────
 ipcMain.handle('generate-pack', async (_event, payload) => {
-  const { customModelData, modelName, selectedItem, modelJson, outputPath } = payload;
+  const { customModelData, modelName, selectedItem, modelJson, outputPath,
+          textureBase64, textureName } = payload;
 
   try {
     // Validate JSON content before touching the disk
@@ -62,6 +63,15 @@ ipcMain.handle('generate-pack', async (_event, payload) => {
       path.join(modelsItemDir, `${modelName}.json`),
       modelJson,
     );
+
+    // Uploaded texture (optional) ─────────────────────────────────────────
+    if (textureBase64 && textureName) {
+      const ext = path.extname(textureName).toLowerCase() || '.png';
+      fs.writeFileSync(
+        path.join(texturesItemDir, `${modelName}${ext}`),
+        Buffer.from(textureBase64, 'base64'),
+      );
+    }
 
     // Override JSON for the chosen vanilla item ────────────────────────────
     const overrideJson = {
