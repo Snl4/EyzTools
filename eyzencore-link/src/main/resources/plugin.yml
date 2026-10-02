@@ -1,0 +1,29 @@
+name: EyzencoreLink
+version: ${version}
+main: net.eyzencore.link.EyzencoreLinkPlugin
+api-version: '1.21'
+authors: [Eyzencore]
+description: Links Minecraft accounts to Discord and pushes player stats to eyzencore.net
+website: https://eyzencore.net
+softdepend: [MythicMobs]
+commands:
+  link:
+    description: Bind your Minecraft account to Discord using a site code
+    usage: /link <code>
+    permission: eyzencore.link
+  unlink:
+    description: Unbind your Minecraft account from Discord
+    usage: /unlink
+    permission: eyzencore.link
+  eyzencore:
+    description: Admin commands for Eyzencore Link
+    usage: /eyzencore <reload|push> [player]
+    permission: eyzencore.admin
+    aliases: [eyzen]
+permissions:
+  eyzencore.link:
+    description: Use /link and /unlink
+    default: true
+  eyzencore.admin:
+    description: Reload config and force-push stats
+    default: op
