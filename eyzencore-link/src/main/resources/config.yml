@@ -1,0 +1,20 @@
+api:
+  base-url: "https://eyzencore.net"
+  token: "CHANGE_ME"
+stats:
+  push-interval-minutes: 5
+  push-on-quit: true
+whitelist:
+  enabled: false
+  kick-message: "Подай заявку на сайті eyzencore.net"
+custom-mobs:
+  # Scoreboard tag or PDC key set by the mob pack/plugin. id must match the site.
+  crab: { tag: "eyzencore.crab" }
+  penguin: { tag: "eyzencore.penguin" }
+  deer: { tag: "eyzencore.deer" }
+  monkey: { tag: "eyzencore.monkey" }
+  alligator: { tag: "eyzencore.alligator" }
+  ostrich: { tag: "eyzencore.ostrich" }
+  meerkat: { tag: "eyzencore.meerkat" }
+  vulture: { tag: "eyzencore.vulture" }
+  moobloom: { tag: "eyzencore.moobloom" }
