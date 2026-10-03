@@ -40,7 +40,7 @@ public final class EyzencoreLinkPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MythicMobTagListener(this, pluginConfig), this);
         getServer().getPluginManager().registerEvents(new WhitelistListener(pluginConfig, whitelistService), this);
         getServer().getPluginManager().registerEvents(statsPushService, this);
-        getServer().getPluginManager().registerEvents(new ChatFormatListener(), this);
+        getServer().getPluginManager().registerEvents(new ChatFormatListener(pluginConfig), this);
 
         registerCommands();
 

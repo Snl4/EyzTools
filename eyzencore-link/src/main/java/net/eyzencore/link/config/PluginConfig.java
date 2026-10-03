@@ -17,6 +17,10 @@ public final class PluginConfig {
     private boolean pushOnQuit;
     private boolean whitelistEnabled;
     private String whitelistKickMessage;
+    private boolean chatEnabled;
+    private double chatLocalRadius;
+    private String chatLocalPrefix;
+    private String chatGlobalPrefix;
     private Map<String, String> customMobTags;
 
     public PluginConfig(EyzencoreLinkPlugin plugin) {
@@ -33,6 +37,10 @@ public final class PluginConfig {
                 "whitelist.kick-message",
                 "Подай заявку на сайті eyzencore.net"
         );
+        this.chatEnabled = plugin.getConfig().getBoolean("chat.enabled", true);
+        this.chatLocalRadius = Math.max(1.0, plugin.getConfig().getDouble("chat.local-radius", 50.0));
+        this.chatLocalPrefix = plugin.getConfig().getString("chat.local-prefix", "&8[Л]&r ");
+        this.chatGlobalPrefix = plugin.getConfig().getString("chat.global-prefix", "&6[Г]&r ");
 
         Map<String, String> tags = new LinkedHashMap<>();
         ConfigurationSection section = plugin.getConfig().getConfigurationSection("custom-mobs");
@@ -83,5 +91,21 @@ public final class PluginConfig {
 
     public Map<String, String> customMobTags() {
         return customMobTags;
+    }
+
+    public boolean chatEnabled() {
+        return chatEnabled;
+    }
+
+    public double chatLocalRadius() {
+        return chatLocalRadius;
+    }
+
+    public String chatLocalPrefix() {
+        return chatLocalPrefix;
+    }
+
+    public String chatGlobalPrefix() {
+        return chatGlobalPrefix;
     }
 }
