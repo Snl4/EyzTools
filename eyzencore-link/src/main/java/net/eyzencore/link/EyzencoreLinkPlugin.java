@@ -1,6 +1,7 @@
 package net.eyzencore.link;
 
 import net.eyzencore.link.api.ApiClient;
+import net.eyzencore.link.chat.ChatFormatListener;
 import net.eyzencore.link.command.EyzencoreCommand;
 import net.eyzencore.link.command.LinkCommand;
 import net.eyzencore.link.command.UnlinkCommand;
@@ -39,6 +40,7 @@ public final class EyzencoreLinkPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MythicMobTagListener(this, pluginConfig), this);
         getServer().getPluginManager().registerEvents(new WhitelistListener(pluginConfig, whitelistService), this);
         getServer().getPluginManager().registerEvents(statsPushService, this);
+        getServer().getPluginManager().registerEvents(new ChatFormatListener(), this);
 
         registerCommands();
 

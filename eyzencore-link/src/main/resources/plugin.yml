@@ -5,7 +5,7 @@ api-version: '1.21'
 authors: [Eyzencore]
 description: Links Minecraft accounts to Discord and pushes player stats to eyzencore.net
 website: https://eyzencore.net
-softdepend: [MythicMobs]
+softdepend: [MythicMobs, PlaceholderAPI, LuckPerms]
 commands:
   link:
     description: Bind your Minecraft account to Discord using a site code
